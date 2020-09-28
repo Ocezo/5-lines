@@ -176,3 +176,5 @@ if __name__ == '__main__':
     [x_, y_] = line_limits(a_[0], b_[0], xlim[0], xlim[1], ylim[0], ylim[1])
     plt.plot(x_, y_, 'b--', lw=2)
     plt.show()
+
+    # remove the model: eps_i = y - a x_i - b
