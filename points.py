@@ -66,53 +66,53 @@ def generate_line():
 
 def generate_noisy_line(n):
     # generate 2 random points ~> line
-    [xl, yl] = np.random.rand(2, 2)  # 2 random support points
-    [a, b] = line_param(xl, yl)
+    [xs, ys] = np.random.rand(2, 2)  # 2 random support points "s"
+    [a, b] = line_param(xs, ys)
 
     plt.figure(1)
-    plt.scatter(xl, yl, c='r')  # support points in red
+    plt.scatter(xs, ys, c='r')  # support points in red
     plt.axis('equal')
 
-    x_ = np.random.rand(n) # n random points -> x coordinates
-    y_ = a * x_ + b        # n random points -> y coordinates
+    x = np.random.rand(n)  # n random points -> x coordinates
+    y = a * x + b          # n random points -> y coordinates
 
     radius = 3
     colors = np.random.rand(n)
     area = np.pi * (radius * np.ones(n)) ** 2
 
-    x_min = np.concatenate((np.zeros(1), xl, x_), axis=0).min()
-    x_max = np.concatenate((np.ones(1),  xl, x_), axis=0).max()
-    y_min = np.concatenate((np.zeros(1), yl, y_), axis=0).min()
-    y_max = np.concatenate((np.ones(1),  yl, y_), axis=0).max()
+    x_min = np.concatenate((np.zeros(1), xs, x), axis=0).min()
+    x_max = np.concatenate((np.ones(1),  xs, x), axis=0).max()
+    y_min = np.concatenate((np.zeros(1), ys, y), axis=0).min()
+    y_max = np.concatenate((np.ones(1),  ys, y), axis=0).max()
     [xlim, ylim] = line_limits(a, b, x_min, x_max, y_min, y_max)
 
-    plt.plot(xlim, ylim, 'b--', lw=2)  # limits dash line
-    # plt.scatter(x_, y_, s=area, c=colors, alpha=0.5)
+    plt.plot(xlim, ylim, 'g--', lw=2)  # limits dash line
+    # plt.scatter(x, y, s=area, c=colors, alpha=0.5)
 
-    x_min = np.concatenate((xl, x_), axis=0).min()
-    x_max = np.concatenate((xl, x_), axis=0).max()
-    y_min = np.concatenate((yl, y_), axis=0).min()
-    y_max = np.concatenate((yl, y_), axis=0).max()
+    # plt.plot(np.linspace(xlim[0], xlim[1], 20), ylim[0] * np.ones(20), 'r--', lw=2)
+    # plt.plot(np.linspace(xlim[0], xlim[1], 20), ylim[1] * np.ones(20), 'r--', lw=2)
+    # plt.plot(xlim[0] * np.ones(20), np.linspace(ylim[0], ylim[1], 20), 'r--', lw=2)
+    # plt.plot(xlim[1] * np.ones(20), np.linspace(ylim[0], ylim[1], 20), 'r--', lw=2)
 
-    plt.scatter(x_min, y_min, c='orange')
-    plt.scatter(x_max, y_max, c='orange')
-    h_max = math.sqrt((x_max - x_min) ** 2 + (y_max - y_min) ** 2)  # euclidean distance between the 2 extreme points
+    h_max = math.sqrt((xlim[1] - xlim[0]) ** 2 + (ylim[1] - ylim[0]) ** 2)  # euclidean distance of the 2 extreme points
 
-    ratio = 0.10  # width / height ratio
+    ratio = 0.20  # width / height ratio
     w_max = ratio * h_max
 
     w_mu = 0
     w_sigma = w_max / 3
     width_ = w_sigma * np.random.randn(n) + w_mu
-    xh_ = x_ + width_ * (-a) / math.sqrt(a ** 2 + 1)
-    yh_ = y_ + width_ * 1 / math.sqrt(a ** 2 + 1)
-    plt.scatter(xh_, yh_, s=area, c=colors, alpha=0.5)
-    plt.show()
+    xdata = x + width_ * (-a) / math.sqrt(a ** 2 + 1)   # x data coordinates
+    ydata = y + width_ * 1 / math.sqrt(a ** 2 + 1)      # y data coordinates
+    plt.scatter(xdata, ydata, s=area, c=colors, alpha=0.5)
 
     # for i in range(n):
-    #    point_projection(xh_[i], yh_[i], a, b)
+    #     point_projection(xd[i], yd[i], a, b)
 
-    return a, b
+    xlim2 = [min(xdata), max(xdata)]
+    ylim2 = [min(ydata), max(ydata)]
+
+    return a, b, xdata, ydata, xlim2, ylim2
 
 
 def point_projection(x_m, y_m, a_, b_):
@@ -160,9 +160,19 @@ if __name__ == '__main__':
     #
     # for i in range(n):
     #     point_projection(x[i], y[i], a, b)
-
-    generate_noisy_line(20)
-
+    #
     # mu = 6
     # sigma = 1
     # generate_noise(n, mu, sigma)
+
+    n = 20
+    [a, b, xd, yd, xlim, ylim] = generate_noisy_line(n)
+
+    # Least squares - dummy solution : A.x = c <=> x = (A^T*A)^-1.A^T.c
+    A = np.concatenate((xd.reshape((n, 1)), np.ones((n, 1))), axis=1)
+    c = yd.reshape((n, 1))
+    [a_, b_] = np.linalg.inv(A.transpose()@A) @ (A.transpose() @ c)  # pseudo-inverse
+
+    [x_, y_] = line_limits(a_[0], b_[0], xlim[0], xlim[1], ylim[0], ylim[1])
+    plt.plot(x_, y_, 'b--', lw=2)
+    plt.show()
